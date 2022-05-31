@@ -1,21 +1,25 @@
-name: Python application
+# This workflow installs Go,CDK dependencies and deploy stack
+
+name: Stack_Deploy
 
 on:
   workflow_call: 
     inputs:
         role-to-assume:
-          description: 'AWS role passed from the caller workflow'
+          description: 'GitHub OIDC provider of AWS account'
           required: true
           type: string 
 
-
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
-  deployec2stack:
-    runs-on: ubuntu-latest        
+
+  Deploy_Stack:
+  
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
     - uses: actions/checkout@v3
     
@@ -27,16 +31,15 @@ jobs:
 
     - name: Show AWS Caller Identity
       run: aws sts get-caller-identity
-
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+      
+    - name: Set up Go
+      uses: actions/setup-go@v3
       with:
-        python-version: "3.10"
+        go-version: '>1.16'
 
-    - name: Install dependencies
-      run: |
-            python3 -m pip install --upgrade pip
-            python3 -m pip install aws-cdk-lib
+    - name: Check Go Version
+      run: go version
+
     - name: Set up node
       uses: actions/setup-node@v2
       with:
@@ -44,23 +47,9 @@ jobs:
     
     - name: Install cdk
       run: npm install -g aws-cdk
-
-    - name: Get current time
-      uses: josStorer/get-current-time@v2
-      id: current-time
-      with:
-        format: YYYYMMDD-HH
-    - name: Use current time
-      env:
-        TIME: "${{ steps.current-time.outputs.time }}"
-        R_TIME: "${{ steps.current-time.outputs.readableTime }}"
-        F_TIME: "${{ steps.current-time.outputs.formattedTime }}"
-        YEAR: "${{ steps.current-time.outputs.year }}"
-        DAY: "${{ steps.current-time.outputs.day }}"
-      run: echo $TIME $R_TIME $F_TIME $YEAR $DAY
       
     - name: Move to workspace directory
       run: cd ${GITHUB_WORKSPACE} 
       
-    - name: Deploy 
-      run: make ec2
+    - name: Deploy stack
+      run: make deploy    
