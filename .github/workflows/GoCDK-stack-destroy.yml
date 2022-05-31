@@ -1,25 +1,25 @@
-# This workflow installs Go,CDK dependencies and delete stack
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Stack_Delete
+name: Python application
 
 on:
   workflow_call:
     inputs:
         role-to-assume:
-          description: 'GitHub OIDC provider of AWS account'
+          description: 'AWS role passed from the caller workflow'
           required: true
           type: string 
 
-jobs:  
-     
-  Delete_Stack:
-    
-    runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-      contents: read
+permissions:
+  id-token: write
+  contents: read
 
+jobs:
+
+  deletEc2PRstack:
+    runs-on: ubuntu-latest        
     steps:
     - uses: actions/checkout@v3
     
@@ -31,15 +31,16 @@ jobs:
 
     - name: Show AWS Caller Identity
       run: aws sts get-caller-identity
-      
-    - name: Set up Go
-      uses: actions/setup-go@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
       with:
-        go-version: '>1.16'
+        python-version: "3.10"
 
-    - name: Check Go Version
-      run: go version
-
+    - name: Install dependencies
+      run: |
+            python3 -m pip install --upgrade pip
+            python3 -m pip install aws-cdk-lib
     - name: Set up node
       uses: actions/setup-node@v2
       with:
@@ -51,6 +52,5 @@ jobs:
     - name: Move to workspace directory
       run: cd ${GITHUB_WORKSPACE} 
       
-    - name: Destroy stack 
-      run: make destroy
-     
+    - name: Delete stack 
+      run: make destroy  
